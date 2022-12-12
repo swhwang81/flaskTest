@@ -1,128 +1,107 @@
-from flask import Flask
-from flask import request, redirect
- 
-app = Flask(__name__)
- 
-nextId =4
- 
-topics = [
-    {'id': 1, 'title': 'html', 'body': 'html is ...'},
-    {'id': 2, 'title': 'css', 'body': 'css is ...'},
-    {'id': 3, 'title': 'javascript', 'body': 'javascript is ...'}
-]
- 
- 
-def template(contents, content,id=None):
-    contextUI =''
-    if id !=None:
-        contextUI=f'''
-            <li><a href="/update/{id}/">update</a></li>
-            <li><form action="/delete/{id}/" method="POST"><input type="submit" value="delete"></form></li>
-        '''
-    return f'''<!doctype html>
-    <html>
-        <body>
-            <h1><a href="/">WEB</a></h1>
-            <ol>
-                {contents}
-            </ol>
-            {content}
-            <ul>
-                <li><a href="/create/">create</a></li>
-                {contextUI}
-            </ul>
-        </body>
-    </html>
-    '''
- 
- 
-def getContents():
-    liTags = ''
-    for topic in topics:
-        liTags = liTags + f'<li><a href="/read/{topic["id"]}/">{topic["title"]}</a></li>'
-    return liTags
- 
- 
-@app.route('/')
-def index():
-    return template(getContents(), '<h2>Welcome</h2>Hello, WEB')
- 
- 
-@app.route('/read/<int:id>/')
-def read(id):
-    title = ''
-    body = ''
-    for topic in topics:
-        if id == topic['id']:
-            title = topic['title']
-            body = topic['body']
-            break
-    return template(getContents(), f'<h2>{title}</h2>{body}',id)
- 
- 
-@app.route('/create/',methods=['GET','POST'])
-def create():
-    if request.method=='GET':  #전송방식이 GET이면
-        content = '''
-            <form action="/create/" method="POST">
-                <p><input type="text" name="title" placeholder="title"></p>
-                <p><textarea name="body" placeholder="body"></textarea></p>
-                <p><input type="submit" value="create"></p>
-            </form>
-        '''
-        return template(getContents(), content)
-    elif request.method =='POST':
-        global nextId
-        title = request.form['title']
-        body = request.form['body']
-        newTopic ={'id': nextId, 'title':title, 'body':body}
-        topics.append(newTopic)
-        url ='/read/'+str(nextId) +"/"
-        nextId = nextId + 1
-        return redirect(url)
+import streamlit as st
+import pandas as pd
+import numpy as np
+#import matplotlib.pyplot as plt
+import pickle
+import streamlit.components.v1 as components  # Import Streamlit
 
 
-@app.route('/update/<int:id>/',methods=['GET','POST'])
-def update(id):
-    if request.method=='GET':  #전송방식이 GET이면
-        title = ''
-        body = ''
-        for topic in topics:
-            if id == topic['id']:
-                title = topic['title']
-                body = topic['body']
-                break
-        content = f'''
-            <form action="/update/{id}/" method="POST">
-                <p><input type="text" name="title" placeholder="title" value="{title}"></p>
-                <p><textarea name="body" placeholder="body">{body}</textarea></p>
-                <p><input type="submit" value="update"></p>
-            </form>
-        '''
-        return template(getContents(), content)
-    elif request.method =='POST':
-        global nextId
-        title = request.form['title']
-        body = request.form['body']
-        for topic in topics:
-            if id == topic['id']:
-                topic['title'] = title
-                topic['body'] =body
-                break
-        
-        url ='/read/'+str(id) +"/"
-        nextId = nextId + 1
-        return redirect(url)
+st.write("# Model Test")
 
-@app.route('/delete/<int:id>/',methods=['POST'])
-def delete(id):
-    for topic in topics:
-        if id == topic['id']:
-            topics.remove(topic)
-            break
-    return redirect('/')
+model = pickle.load(open('iri.pkl', 'rb'))
+arr = np.array([[5.9,3.0,5.0,1.8]])
+st.write(arr)
+pred =model.predict(arr)
+if pred == 0:
+    st.write("Setosa")
+elif pred == 1:
+    st.write("Versicolor")
+elif pred == 2:
+    st.write("Virginica")
+
+st.write(pred)
+
+st.title("My title")
+st.header("This is header")
+st.write("Hello mypage")
+
+st.write("## streamlit image test")
+st.image('dog.jpg')
+
+st.write("## streamlit dataframe test")
+data = pd.read_csv("iris.csv")
+data
+
+st.write("## streamlit bar chart test")
+var = [10,20,30]
+var
+st.bar_chart(var)
+st.line_chart(var)
+
+chart_data = pd.DataFrame(
+    np.random.randn(20, 3),
+    columns=['a', 'b', 'c'])
+
+st.area_chart(chart_data)
+st.bar_chart(chart_data)
+
+dt = pd.DataFrame(
+    np.random.randn(1000, 2) / [50, 50] + [37.76, -122.4],
+    columns=['lat', 'lon'])
+dt
+st.map(dt)
+
+#arr = np.random.normal(1, 1, size=100)
+#fig, ax = plt.subplots()
+#ax.hist(arr, bins=20)
+
+#st.pyplot(fig)
 
 
-if __name__ == "__main__":
-    #app.run(host="192.168.0.17", port=808, debug=True)
-    app.run(port=8080, debug=False)
+
+st.write("## streamlit display widgets test")
+st.button("click me!")
+#체크박스
+agree = st.checkbox('I agree')
+disagree = st.checkbox('I don\'t agree')
+if agree:
+    st.write("agree!")
+
+if disagree:
+    st.write("disagree!")
+#라디오 버튼
+kind = st.radio('Pick one', ['cats', 'dogs'])
+if kind == 'cats':
+    st.write('This is cats.')
+else:
+    st.write("This is dogs.")
+#선택박스
+option = st.selectbox('Pick one', ['cats', 'dogs'])
+st.write('you selected ', option)
+
+#멀티선택
+options = st.multiselect('Buy', ['milk', 'apples', 'potatoes'])
+st.write(len(options))
+for i in options:
+    st.write('you selected: ', i)
+#슬라이더
+age = st.slider('Pick a number', 0, 100)
+st.write("you are ", age, ' years old')
+
+st.select_slider('Pick a size', ['S', 'M', 'L'])
+st.text_input('First name')
+st.number_input('Pick a number', 0, 10)
+st.text_area('Text to translate')
+st.date_input('Your birthday')
+st.time_input('Meeting time')
+st.file_uploader('Upload a CSV')
+#st.download_button('Download file', data)
+#st.camera_input("Take a picture")
+#st.color_picker('Pick a color')
+
+with st.form(key='my_form'):
+    username = st.text_input('Username')
+    password = st.text_input('Password')
+    st.form_submit_button('Login')
+
+components.iframe("https://docs.streamlit.io/en/latest", width =800, height=800)
